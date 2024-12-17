@@ -63,6 +63,9 @@ After installing the required environment, the synthetic data can be generated b
 conda activate reproduce_benchmark
 ./experiments/reproducibility/generation/generate_sdv.sh
 
+./experiments/reproducibility/generation/generate_sdg.sh
+
+
 conda activate rctgan
 ./experiments/reproducibility/generation/generate_rctgan.sh
 

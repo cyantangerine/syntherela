@@ -1,0 +1,3 @@
+[submodule "mysdg"]
+	path = mysdg
+	url = https://github.com/cyantangerine/mysdg
