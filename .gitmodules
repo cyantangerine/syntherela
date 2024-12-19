@@ -1,3 +1,6 @@
 [submodule "mysdg"]
 	path = mysdg
 	url = https://github.com/cyantangerine/mysdg
+[submodule "sdgx"]
+	path = sdgx
+	url = ./sdgx
