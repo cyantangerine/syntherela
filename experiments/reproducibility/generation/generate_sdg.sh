@@ -17,6 +17,6 @@ for DATASET in ${DATASETS[@]}
 do
     for RUN_ID in ${RUN_IDS[@]}
     do
-        python experiments/generation/sdg/generate_sdg.py --dataset-name $DATASET --run-id $RUN_ID
+        python experiments/generation/sdg/generate_sdg.py --dataset-name $DATASET --run-id $RUN_ID 2>&1 | tee SDG_$DATASET.log
     done
 done

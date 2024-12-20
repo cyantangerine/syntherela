@@ -1,6 +1,6 @@
 from graphviz import Digraph
 
-def generate_er_graph(table_relations):
+def generate_er_graph(table_relations, name="erdata"):
     dot = Digraph(comment='ER Diagram')
 
     # 记录所有表
@@ -24,7 +24,7 @@ def generate_er_graph(table_relations):
         dot.edge(parent, child, label=f'{parent_key} -> {child_key}')
 
     # 渲染 ER 图为文件或输出为 PNG
-    dot.render('er_diagram', format='png', cleanup=True)
+    dot.render("ERGraph_" + name, format='png', cleanup=True)
     return dot
 
 if __name__ == "__main__":

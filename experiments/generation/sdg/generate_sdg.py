@@ -21,8 +21,15 @@ args = args.parse_args()
 
 dataset_name = args.dataset_name
 
-dataset_name = 'Biodegradability_v1'
+# TODO Biodegradability_v1 的bond有数据为空，但不应该有。
 
+# dataset_name = 'Biodegradability_v1'
+dataset_name = '''    airbnb-simplified_subsampled
+    Biodegradability_v1
+    CORA_v1
+    imdb_MovieLens_v1
+    rossmann_subsampled
+    walmart_subsampled'''.split("\n")[3].strip()
 
 real_data_path = args.real_data_path
 synthetic_data_path = args.synthetic_data_path
@@ -60,65 +67,17 @@ synthetic_data = {}
 
 # GENERATE SYNTHETIC DATA ---------------------------------
 from multi_pca_rfe_ctgan import MultiTable_PCA_CTGAN
-from testcode import Xargs
 from testcode.Xargs import XMetaBuilder
-
-
-
-# x_args = Xargs.XArgs.tables_multi_
-# met_, tables = fetch_data_from_sqlite(db_path)
-# db_path, tables.keys()
-
+from generate_join_keys import generate_xargs
 total_length = max([len(item) for item in real_data.values()])
 tables = real_data
-x_table = []
-x_key_map = {}
-table_names_mapper = {}
-for item in metadata.relationships:
-    pk = item["parent_primary_key"]
-    ck = item["child_foreign_key"]
-    pn = item["parent_table_name"]
-    cn = item["child_table_name"]
-    add_pn = True
-    if len(x_table)==0:
-        x_table.append(pn)
-        x_table.append(cn)
-    else:
-        if cn not in x_table:
-            x_table.append(cn)
-            add_pn = False
-        elif pn not in x_table:
-            x_table.append(pn)
-    
-    add_key = cn if not add_pn else pn
-    if add_key not in x_key_map:
-        x_key_map[add_key] = []
-    x_key_map[add_key].append(ck)
-    
-    if ck != pk:
-        if pn not in table_names_mapper:
-            table_names_mapper[pn] = {}
-        table_names_mapper[pn][pk]=ck
-    
-x_key = [(x_key_map[tbn] if len(x_key_map[tbn])>1 else x_key_map[tbn][0] )for i,tbn in enumerate(x_table) if i>0]
+
+table_names_mapper, x_args = generate_xargs(metadata=metadata, dataset_name=dataset_name, logger=logger)
 
 for tbn in table_names_mapper.keys():
     tables[tbn] = pd.DataFrame(tables[tbn]).rename(
         columns=table_names_mapper[tbn]
     )
-
-from dataset_info import get_escapes
-
-escapes = get_escapes(dataset_name)
-
-x_args = Xargs.XArg(
-    x_table=x_table,
-    x_key=x_key,
-    x_how=['outer']*len(x_key),
-    meta_id_escapes=escapes['id'],
-    meta_time_escapes=escapes['time'],
-    meta_datetime_escapes=escapes['datetime']
-)
 
 logger.info(f"X_args for {dataset_name}: {x_args}")
 
@@ -160,4 +119,4 @@ for i in range(1, 4):
     logger.debug(f"Done! Sample {i} saved!")
 
 
-logger.info("COMPLETE GENERATION DONE.")
+logger.info(f"{dataset_name} COMPLETE GENERATION DONE.")
