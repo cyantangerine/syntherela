@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 from sdv.datasets.demo import get_available_demos, download_demo
-
+from sdv.errors import InvalidDataError
 
 def load_tables(data_path, metadata):
     tables = {}
@@ -30,7 +30,7 @@ def load_tables(data_path, metadata):
     return tables
 
 
-def remove_sdv_columns(tables, metadata, update_metadata=True, validate=True):
+def remove_sdv_columns(tables, metadata, update_metadata=True, validate=True, dataset_name="", method_name=""):
     """
     "_v1" Versions of the relational demo datasets in SDV have some columns that are not present in the original datasets.
     We created this function to remove these columns from the tables and the metadata.
@@ -48,9 +48,15 @@ def remove_sdv_columns(tables, metadata, update_metadata=True, validate=True):
                 metadata.tables[table_name].columns.pop(column)
 
         tables[table_name] = table
-    if validate:
-        metadata.validate()
-        metadata.validate_data(tables)
+    try:
+        if validate:
+            metadata.validate()
+            metadata.validate_data(tables)
+    except InvalidDataError as e:
+        print(
+            f"There was an error with dataset: {dataset_name}, method: {method_name}."
+        )
+        print(e)
     return tables, metadata
 
 

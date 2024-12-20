@@ -1,6 +1,36 @@
 from er import generate_er_graph
 from dataset_info import get_escapes
 from testcode import Xargs
+class N2NError(Exception):
+    pass
+class N2NMap:
+    def __init__(self, tbnames):
+        self.pks: dict[str, set[str]] = {tn2: set() for tn2 in tbnames}
+        # cn -> pn: (pk, ck)
+        self.ref_to: dict[str, dict[str, set[tuple[str, str]]]] = {}
+        # pn -> cn: [(pk, ck)]
+        self.ref_from: dict[str, dict[str, set[tuple[str, str]]]] = {}
+        for tn in tbnames:
+            self.ref_to[tn] = {tn2: set() for tn2 in tbnames}
+            self.ref_from[tn] = {tn2: set() for tn2 in tbnames}
+        
+    def set_relation(self, pn, cn, pk, ck):
+        if self.ref_to[pn][cn]:
+            raise N2NError("不能形成环路")
+        if pk in [v[0] for v in self.ref_from[pn][cn]]:
+            raise N2NError("在单表中不能引用同一个pk两次")
+        self.pks[pn].add(pk)
+        if len(self.pks[pn]) > 1:
+            print(f"侦测到{pn}具有复合主键{self.pks[pn]}")
+        self.ref_to[cn][pn].add((pk, ck))
+        self.ref_from[pn][cn].add((pk, ck))
+    
+    def get_node(self, node) -> tuple[dict[str,set[tuple[str, str]]], dict[str,set[tuple[str, str]]]]:
+        return self.ref_from[node], self.ref_to[node]
+        
+        
+    def get_relation(self, pn, cn) -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
+        return self.ref_from[pn][cn], self.ref_to[cn][pn]
 
 def set_relation_item(item, pk, ck, pn, cn):
     item["parent_primary_key"] = pk
@@ -21,8 +51,15 @@ def generate_xargs(metadata, dataset_name, logger):
     table_names_mapper = {}
     table_columns_using = {}
     # 处理更名！########################
+    x_table = []
     for item in metadata.relationships:
         pk, ck, pn, cn = get_relation_item(item)
+        
+        if pn not in x_table:
+            x_table.append(pn)
+        if cn not in x_table:
+            x_table.append(cn)
+        
         # 为了防止参考键名称不同，需要更名！
         if (pn, pk) not in table_columns_using:
             table_columns_using[(pn, pk)] = []
@@ -50,76 +87,70 @@ def generate_xargs(metadata, dataset_name, logger):
     
     # 处理关系 ##############
     
-    x_table = []
-    x_key_p2c_map = {}
-    x_key_c2p_map = {}
+    
+    rela_map = N2NMap(x_table)
+    # x_key_p2c_map = {}
+    # x_key_c2p_map = {}
     
     for item in metadata.relationships:
         pk, ck, pn, cn = get_relation_item(item)
-        
-        if pn not in x_table:
-            x_table.append(pn)
-            x_key_p2c_map[pn] = {}
-            x_key_c2p_map[pn] = {}
-        if cn not in x_table:
-            x_table.append(cn)
-            x_key_p2c_map[cn] = {}
-            x_key_c2p_map[cn] = {}
-        # 以下的两个warn是等价的。
-        if ck not in [v[1] for v in x_key_p2c_map[pn].values()]:
-            x_key_p2c_map[pn][pk] = (cn, ck)
-        else:
-            logger.warning(f"{(pn,pk)} <= {cn,ck} 被忽略了，因为不支持单表中对同一个外键的多次参考（有2个列参照同1个列），已有参照 {(pn,pk)} <= {x_key_p2c_map[pn][pk]}")
+        try:
+            rela_map.set_relation(pn, cn, pk, ck)
+        except N2NError as e:
+            rela_from, rela_to = rela_map.get_relation(pn,cn)
+            logger.warning(f"{e} ERROR {(pn,pk)} <= {cn,ck} 被忽略了，已有参照: {pn} => {cn}: {rela_from}, {cn} => {pn}: {rela_to}")
             # 删除更名
             del table_names_mapper[cn][ck]
             continue
-        if pn not in x_key_c2p_map[cn]:
-            x_key_c2p_map[cn][pn] = (pk, ck)
-        else:
-            logger.warning(f"{(pn,pk)} <= {cn,ck} 被忽略了，因为不支持单表中对同一个表有多个外键参考（有多个列参照同一个表的键），已有参照 {(pn,pk)} <= {cn, x_key_c2p_map[cn][pn][1]}")
-            del table_names_mapper[cn][ck]
-            continue
+        # if pn not in x_key_c2p_map[cn]:
+        #     x_key_c2p_map[cn][pn] = (pk, ck)
+        # else:
+        #     raise ValueError
+        #     logger.warning(f"ERROR BBBBB {(pn,pk)} <= {cn,ck} 被忽略了，因为不支持单表中对同一个表有多个外键参考（有多个列参照同一个表的键），已有参照 {(pn,pk)} <= {cn, x_key_c2p_map[cn][pn][1]}")
+        #     del table_names_mapper[cn][ck]
+        #     continue
 
             
-
-    print(x_key_c2p_map)
-    print("============")
-    print(x_key_p2c_map)
-    print("============")
+    for tb in x_table:
+        f, t = rela_map.get_node(tb)
+        for ff in [f, t]:
+            ks = list(ff.keys())
+            for k in ks:
+                if not ff[k]:
+                    del ff[k]
+        print(f"{tb}: 被参考 {f}，参考了 {t}")
+    # print(x_key_c2p_map)
+    # print("============")
+    # print(x_key_p2c_map)
+    # print("============")
     x_key = []
     parent_subset = set()
     for tb in x_table:
         if len(parent_subset) > 0:
-            rela = {}
+            rf, rt = rela_map.get_node(tb)
+            rela: dict[str, set] = {}
             keys = set()
-            for ptb in parent_subset: # 查找当前结点有无孩子已经被连接。
-                rela[ptb] = x_key_p2c_map[ptb]
-                for v in rela[ptb].values():
-                    if v[0] == tb:
-                        keys.add(table_names_mapper[tb][v[1]])
-            
-            for ptb, v in x_key_p2c_map[tb].values():
-                if ptb in parent_subset:
-                    keys.add(table_names_mapper[ptb][v])
-            
-            parents_key = []
-            for ptb in parent_subset: # 对父亲考虑,查找是否父亲已经被连接了。
-                if ptb in x_key_c2p_map[tb]:
-                    tk = x_key_c2p_map[tb][ptb][1]
-                    tk = table_names_mapper[tb][tk]
-                    parents_key.append(tk)
-            
-            keys = keys.union(parents_key)
-            print(tb, keys, rela, parents_key)
-            
-            # set(item for item in rela.values())
+            for k in rf:
+                if k in parent_subset:
+                    rela[k] = rf[k].copy()
+            for k in rt:
+                if k not in parent_subset:
+                    continue
+                if k in rela:
+                    t = rt[k].copy()
+                    rela[k] = t.union(rela[k])
+                else:
+                    rela[k] = rt[k]
+            for pn, s in rela.items():
+                for (pk, ck) in s:
+                    keys.add(table_names_mapper[tb][ck])
+            print(tb, keys, rela)
             x_key.append(keys)
         parent_subset.add(tb)
-        # x_key.append() [ x_key_map[tbn].values() for i,tbn in enumerate(x_table) if i>0]
     print(x_key)
 
-    if input("Check:")!='':
-        exit(1)
+    # if input("Check:")!='':
+    #     exit(1)
         
     
 
@@ -135,3 +166,46 @@ def generate_xargs(metadata, dataset_name, logger):
         meta_datetime_escapes=escapes['datetime']
     )
     return table_names_mapper, x_args
+
+if __name__ == "__main__":
+    import logging
+    class m:
+        relationships = [{
+            "parent_table_name": "molecule",
+            "parent_primary_key": "molecule_id",
+            "child_table_name": "atom",
+            "child_foreign_key": "molecule_id"
+        },
+        {
+            "parent_table_name": "atom",
+            "parent_primary_key": "atom_id",
+            "child_table_name": "bond",
+            "child_foreign_key": "atom_id"
+        },
+        {
+            "parent_table_name": "atom",
+            "parent_primary_key": "atom_id",
+            "child_table_name": "bond",
+            "child_foreign_key": "atom_id2"
+        },
+        {
+            "parent_table_name": "atom",
+            "parent_primary_key": "atom_id",
+            "child_table_name": "gmember",
+            "child_foreign_key": "atom_id"
+        },
+        {
+            "parent_table_name": "group",
+            "parent_primary_key": "group_id",
+            "child_table_name": "gmember",
+            "child_foreign_key": "group_id"
+        }]
+    meta = m()
+    import sys
+    logger = logging.getLogger(f"logger")
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler = logging.StreamHandler(stream=sys.stdout)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    generate_xargs(meta, 'test', logger=logger)

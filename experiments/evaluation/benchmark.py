@@ -1,4 +1,7 @@
 import sys
+
+print(sys.path)
+
 import logging
 import argparse
 
@@ -37,6 +40,9 @@ args.add_argument("--run-id", type=str, default="1")
 args = args.parse_args()
 dataset_name = args.dataset_name
 methods = args.methods
+
+methods = ["SDG"] # TODO TODO
+
 run_id = args.run_id
 
 logger = logging.getLogger(f"{dataset_name}_logger")

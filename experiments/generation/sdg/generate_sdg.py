@@ -21,15 +21,15 @@ args = args.parse_args()
 
 dataset_name = args.dataset_name
 
-# TODO Biodegradability_v1 的bond有数据为空，但不应该有。
+# TODO Biodegradability_v1 的bond有数据为空(因为训练的时候outerjoin，自然就有)，但不应该有。
 
-# dataset_name = 'Biodegradability_v1'
-dataset_name = '''    airbnb-simplified_subsampled
-    Biodegradability_v1
-    CORA_v1
-    imdb_MovieLens_v1
-    rossmann_subsampled
-    walmart_subsampled'''.split("\n")[3].strip()
+# dataset_name = 'imdb_MovieLens_v1'
+# dataset_name = '''    airbnb-simplified_subsampled
+#     Biodegradability_v1
+#     CORA_v1
+#     imdb_MovieLens_v1
+#     rossmann_subsampled
+#     walmart_subsampled'''.split("\n")[5].strip()
 
 real_data_path = args.real_data_path
 synthetic_data_path = args.synthetic_data_path

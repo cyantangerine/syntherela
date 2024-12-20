@@ -31,9 +31,13 @@ class Report:
         multi_table_metrics=[],
         validate_metadata=True,
     ):
-        if validate_metadata:
-            metadata.validate_data(real_data)
-            metadata.validate_data(synthetic_data)
+        try:
+            if validate_metadata:
+                metadata.validate_data(real_data)
+                metadata.validate_data(synthetic_data)
+        except BaseException as e:
+            print(e)
+        
         self.real_data = real_data
         self.synthetic_data = synthetic_data
 

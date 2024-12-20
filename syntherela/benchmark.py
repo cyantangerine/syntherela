@@ -102,13 +102,17 @@ class Benchmark:
         synthetic_data = load_tables(synthetic_data_path, metadata)
 
         real_data, metadata = remove_sdv_columns(
-            real_data, metadata, validate=self.validate_metadata
+            real_data, metadata, validate=self.validate_metadata,
+            dataset_name=dataset_name,
+            method_name=method_name
         )
         synthetic_data, metadata = remove_sdv_columns(
             synthetic_data,
             metadata,
             update_metadata=False,
             validate=self.validate_metadata,
+            dataset_name=dataset_name,
+            method_name=method_name
         )
 
         return real_data, synthetic_data, metadata
@@ -149,6 +153,8 @@ class Benchmark:
                         f"There was an error with dataset: {dataset_name}, method: {method_name}."
                     )
                     print(e)
+                    import traceback
+                    traceback.print_exception(e)
 
     def read_results(self):
         for dataset_name in self.datasets:
