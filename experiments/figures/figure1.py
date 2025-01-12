@@ -11,6 +11,7 @@ rc("font", **{"family": "serif", "serif": ["Times"], "size": 30})
 rc("text", usetex=True)
 
 methods = [
+    "SDG",
     "SDV",
     "RCTGAN",
     "REALTABFORMER",
@@ -61,6 +62,7 @@ COLORMAP = [
 ]
 
 COLOR_DICT = {
+    "SDG": COLORMAP[7],
     "REAL": COLORMAP[6],
     "MOSTLYAI": COLORMAP[8],
     "SDV": COLORMAP[0],

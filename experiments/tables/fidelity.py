@@ -35,7 +35,7 @@ single_table_methods = [
     "tvae",
 ]
 
-all_methods = [
+all_methods = ["SDG",
     "SDV",
     "RCTGAN",
     "REALTABFORMER",
@@ -45,7 +45,7 @@ all_methods = [
     "CLAVADDPM",
 ] + single_table_methods
 
-method_names_dict = {
+method_names_dict = {"SDG": "SDG",
     "SDV": "SDV",
     "RCTGAN": "RCTGAN",
     "REALTABFORMER": "REALTABF.",
@@ -62,7 +62,7 @@ method_names_dict = {
 
 dataset_method_dict = {
     "airbnb-simplified_subsampled": [
-        "SDV",
+        "SDG","SDV",
         "RCTGAN",
         "REALTABFORMER",
         "MOSTLYAI",
@@ -76,7 +76,7 @@ dataset_method_dict = {
         "tvae",
     ],
     "rossmann_subsampled": [
-        "SDV",
+        "SDG","SDV",
         "RCTGAN",
         "REALTABFORMER",
         "MOSTLYAI",
@@ -90,7 +90,7 @@ dataset_method_dict = {
         "tvae",
     ],
     "walmart_subsampled": [
-        "SDV",
+        "SDG","SDV",
         "RCTGAN",
         "REALTABFORMER",
         "MOSTLYAI",
@@ -104,6 +104,7 @@ dataset_method_dict = {
         "tvae",
     ],
     "Biodegradability_v1": [
+        # "SDG",
         "SDV",
         "RCTGAN",
         "MOSTLYAI",
@@ -117,7 +118,7 @@ dataset_method_dict = {
     ],
     "imdb_MovieLens_v1": ["RCTGAN", "MOSTLYAI", "GRETEL_ACTGAN", "CLAVADDPM", "ddpm"],
     "CORA_v1": [
-        "SDV",
+        "SDG","SDV",
         "RCTGAN",
         "GRETEL_ACTGAN",
         "GRETEL_LSTM",
@@ -246,6 +247,7 @@ def create_table(metric_type, table_name="table1"):
 
         for dataset in datasets:
             detection_dict = {
+                "SDG": {},
                 "SDV": {},
                 "RCTGAN": {},
                 "REALTABFORMER": {},

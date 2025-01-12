@@ -13,6 +13,7 @@ benchmark = Benchmark(
     sample_id="sample1",
     datasets=["rossmann_subsampled"],
     methods=[
+        "SDG",
         "SDV",
         "RCTGAN",
         "REALTABFORMER",

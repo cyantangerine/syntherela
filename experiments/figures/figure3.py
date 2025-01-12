@@ -10,7 +10,7 @@ benchmark = Benchmark(
     run_id="1",
     sample_id="sample1",
     datasets=["Biodegradability_v1"],
-    methods=["SDV", "RCTGAN", "MOSTLYAI", "GRETEL_ACTGAN", "GRETEL_LSTM"],
+    methods=["SDG","SDV", "RCTGAN", "MOSTLYAI", "GRETEL_ACTGAN", "GRETEL_LSTM"],
     validate_metadata=False,
 )
 
@@ -37,7 +37,7 @@ benchmark = Benchmark(
     run_id="1",
     sample_id="sample1",
     datasets=["rossmann_subsampled"],
-    methods=[
+    methods=["SDG",
         "SDV",
         "RCTGAN",
         "REALTABFORMER",

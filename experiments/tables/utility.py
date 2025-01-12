@@ -9,6 +9,7 @@ warnings.filterwarnings("ignore")
 
 run = 1
 method_names_dict = {
+    "SDG": "SDG",
     "SDV": "SDV",
     "RCTGAN": "RCTGAN",
     "REALTABFORMER": "REALTABF.",
@@ -23,7 +24,8 @@ baselines = {"walmart": 7697, "rossmann": 345, "airbnb": 0.5}
 dataset_names = {"walmart": "Walmart", "rossmann": "Rossmann", "airbnb": "AirBnB"}
 
 
-def df_to_latex(df):
+def df_to_latex(df:pd.DataFrame):
+    return df.to_csv(index=False)
     latex_table = df.to_latex(index=False, escape=False, column_format="clrrr")
     # replace all white spaces with one space
     table_latex = re.sub(" +", " ", latex_table)

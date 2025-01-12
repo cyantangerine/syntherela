@@ -15,6 +15,7 @@ def read_utility_results(dataset, model="xgboost", run="1"):
     with open(f"results/mle_{dataset_name}_{run}_0.json", "r") as f:
         results = json.load(f)[dataset_name]
     for method in [
+        "SDG",
         "SDV",
         "RCTGAN",
         "REALTABFORMER",
@@ -23,6 +24,11 @@ def read_utility_results(dataset, model="xgboost", run="1"):
         "GRETEL_LSTM",
         "CLAVADDPM",
     ]:
+        if method not in results:
+            utility_model.append(np.nan)
+            utility_feature.append(np.nan)
+            utility_score.append(np.nan)
+            continue
         utility_model.append(results[method]["spearman_mean"])
         utility_feature.append(results[method]["feature_importance_spearman_mean"])
         utility_score.append(results[method][model]["synthetic_score"])
@@ -38,7 +44,7 @@ def read_fidelity_results(
     dataset, model, metric, target_table=None, target_column=None, run="1"
 ):
     results = []
-    for method in [
+    for method in ["SDG",
         "SDV",
         "RCTGAN",
         "REALTABFORMER",
@@ -56,18 +62,21 @@ def read_fidelity_results(
                 root_table = "users"
             elif dataset == "walmart_subsampled":
                 root_table = "stores"
+            if f"{metric}-{model}" not in method_results["multi_table_metrics"]: continue
             results.append(
                 method_results["multi_table_metrics"][f"{metric}-{model}"][root_table][
                     "accuracy"
                 ]
             )
         elif "SingleColumn" in metric:
+            if f"{metric}-{model}" not in method_results["single_column_metrics"]: continue
             results.append(
                 method_results["single_column_metrics"][f"{metric}-{model}"][
                     target_table
                 ][target_column]["accuracy"]
             )
         elif "SingleTable" in metric:
+            if f"{metric}-{model}" not in method_results["single_table_metrics"]: continue
             results.append(
                 method_results["single_table_metrics"][f"{metric}-{model}"][
                     target_table
@@ -219,7 +228,10 @@ def format_result(result, ci=False):
 
     se = np.std(result) / np.sqrt(len(result))
     mean = np.mean(result)
-    se_digit = abs(int(math.log10(abs(se + 1e-8))))
+    try:
+        se_digit = abs(int(math.log10(abs(se + 1e-8))))
+    except ValueError:
+        se_digit = 4
     if ci:
         q = np.quantile(result, [0.05, 0.95])
         return (
