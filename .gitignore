@@ -201,3 +201,6 @@ er_diagram.*
 er_diagram
 timelog.txt
 ERGraph_*.png
+nohup.out
+result_log*.txt
+result.pkl
